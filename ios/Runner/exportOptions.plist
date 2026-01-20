@@ -5,13 +5,14 @@
  <key>method</key>
  <string>app-store</string>
  <key>teamID</key>
- <string>5439UTM27E</string>
+ <string>9AL24LRX5R</string>
  <key>provisioningProfiles</key>
  <dict>
- <key>com.humhub.app</key>
- <string>humhub_distribution_profile</string>
- <key>com.humhub.app.shareextension</key>
- <string>humhub_share_extension_distribution_profile</string>
+ <key>es.vegalsa.humhub</key>
+ <string>Vegalsa_AppStore</string>
+ <key>es.vegalsa.humhub.shareextension</key>
+ <string>Vegalsa_ShareExt</string>
  </dict>
  </dict>
+
  </plist>
