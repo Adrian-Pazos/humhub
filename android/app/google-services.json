@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "21392898126",
-    "project_id": "humhub-push-service",
-    "storage_bucket": "humhub-push-service.appspot.com"
+    "project_number": "699069651028",
+    "project_id": "aldab-pdc-vegalsa",
+    "storage_bucket": "aldab-pdc-vegalsa.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:21392898126:android:61c84e1edb8b78f708ab1f",
+        "mobilesdk_app_id": "1:699069651028:android:50cbb639c88eec597f75c1",
         "android_client_info": {
-          "package_name": "com.humhub.app"
+          "package_name": "com.vegalsa.humhub"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "21392898126-ds3289q62hgqucr3hhtujkanj6l1u8ee.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBm9okv_3wczFQzFt91Ksg33Tk9KPAMT4o"
+          "current_key": "AIzaSyD7C6imsgdYTs1kQZS5HPhXs_dsrma817U"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "21392898126-ds3289q62hgqucr3hhtujkanj6l1u8ee.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

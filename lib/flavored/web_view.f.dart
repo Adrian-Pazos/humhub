@@ -44,6 +44,10 @@ class FlavoredWebViewState extends ConsumerState<WebViewF> {
   late PullToRefreshController pullToRefreshController;
   late double downloadProgress = 0;
 
+  // --- NUEVO: estado para el botón y url de retorno ---
+  bool _showReturnButton = false;
+  late final String _humhubHomeUrl;
+
   @override
   void initState() {
     instance = ref.read(humHubFProvider);
@@ -86,24 +90,54 @@ class FlavoredWebViewState extends ConsumerState<WebViewF> {
         key: _scaffoldKey,
         backgroundColor: HexColor(instance.manifest.themeColor),
         body: SafeArea(
-          bottom: false,
-          child: FileUploadManagerWidget(
-            child: InAppWebView(
-              initialUrlRequest: _initialRequest,
-              initialSettings: WebViewGlobalController.settings(),
-              pullToRefreshController: pullToRefreshController,
-              shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
-              shouldInterceptFetchRequest: _shouldInterceptFetchRequest,
-              onWebViewCreated: _onWebViewCreated,
-              onCreateWindow: _onCreateWindow,
-              onLoadStop: _onLoadStop,
-              onLoadStart: _onLoadStart,
-              onReceivedError: _onLoadError,
-              onProgressChanged: _onProgressChanged,
-              onDownloadStartRequest: _onDownloadStartRequest,
-              onLongPressHitTestResult: WebViewGlobalController.onLongPressHitTestResult,
+          bottom: true,
+        child: Stack(
+          children: [
+            FileUploadManagerWidget(
+              child: InAppWebView(
+                initialUrlRequest: _initialRequest,
+                initialSettings: WebViewGlobalController.settings(),
+                pullToRefreshController: pullToRefreshController,
+                shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
+                shouldInterceptFetchRequest: _shouldInterceptFetchRequest,
+                onWebViewCreated: _onWebViewCreated,
+                onCreateWindow: _onCreateWindow,
+                onLoadStop: _onLoadStop,
+                onLoadStart: _onLoadStart,
+                onReceivedError: _onLoadError,
+                onProgressChanged: _onProgressChanged,
+                onDownloadStartRequest: _onDownloadStartRequest,
+                onLongPressHitTestResult: WebViewGlobalController.onLongPressHitTestResult,
+              ),
             ),
-          ),
+
+            // --- NUEVO: FAB para volver a HumHub ---
+            if (_showReturnButton)
+              Positioned(
+                right: 16,
+                top: 16,
+                child: FloatingActionButton.small(
+                  heroTag: 'closeExternal',
+                  backgroundColor: Colors.black.withOpacity(0.75),
+                  foregroundColor: Colors.white,
+                  tooltip: 'Volver a HumHub',
+                  child: const Icon(Icons.close),
+                  onPressed: () {
+                    final request = URLRequest(
+                      url: WebUri(_humhubHomeUrl),
+                      headers: instance.customHeaders,
+                    );
+                    WebViewGlobalController.value?.loadUrl(urlRequest: request);
+
+                    // Ocultar inmediatamente para evitar “parpadeo”
+                    setState(() {
+                      _showReturnButton = false;
+                    });
+                  },
+                ),
+              ),
+          ],
+        ),
         ),
       ),
     );
@@ -133,9 +167,35 @@ class FlavoredWebViewState extends ConsumerState<WebViewF> {
     }
     // For SSO
     if (!url.startsWith(instance.manifest.baseUrl) && action.isForMainFrame) {
-      _authBrowser.launchUrl(action.request);
+      if (Platform.isIOS) {
+        _authBrowser.launchUrl(action.request);
+      }
+
+    try {
+      final currentUri = await controller.getUrl(); // WebUri?
+      final currentUrl = currentUri?.rawValue;
+
+      // Guardar solo si estamos en HumHub; si ya estamos fuera, no machacar _returnUrl
+      if (currentUrl != null && currentUrl.startsWith(instance.manifest.baseUrl)) {
+        _humhubHomeUrl = currentUrl;
+      }
+    } catch (_) {
+      // Si falla, no pasa nada; usaremos _humhubHomeUrl como fallback
+    }
+
+      // --- NUEVO: mostrar FAB porque estás fuera de HumHub ---
+      setState(() {
+        _showReturnButton = true;
+      });
+
+      controller.loadUrl(
+        urlRequest: action.request.copyWith(
+          headers: instance.customHeaders,
+        ),
+      );
       return NavigationActionPolicy.CANCEL;
     }
+    
     // For all other external links
     if (!url.startsWith(instance.manifest.baseUrl) && !action.isForMainFrame) {
       await launchUrl(action.request.url!.uriValue, mode: LaunchMode.externalApplication);
@@ -194,6 +254,14 @@ class FlavoredWebViewState extends ConsumerState<WebViewF> {
       WebViewGlobalController.value!
           .evaluateJavascript(source: "document.querySelector('#account-login-form > div.form-group.field-login-rememberme').style.display='none';");
     }
+
+    final isHumhub = url.toString().startsWith(instance.manifest.baseUrl);
+    if (isHumhub && _showReturnButton) {
+      setState(() {
+        _showReturnButton = false;
+      });
+    }
+
     WebViewGlobalController.ajaxSetHeaders(headers: instance.customHeaders);
     WebViewGlobalController.listenToImageOpen();
     WebViewGlobalController.appendViewportFitCover();
@@ -312,6 +380,10 @@ class FlavoredWebViewState extends ConsumerState<WebViewF> {
         // Hide the bottom sheet if it is visible
         Navigator.popUntil(context, ModalRoute.withName(WebViewF.path));
         isDone = true;
+        // Abrimos por defecto el archivo
+        await OpenFile.open(file.path);
+        // No mostramos snack bar de abrir archivo
+        /*
         Keys.scaffoldMessengerStateKey.currentState?.showSnackBar(
           SnackBar(
             content: Text('${AppLocalizations.of(context)!.file_download}: $filename'),
@@ -323,6 +395,7 @@ class FlavoredWebViewState extends ConsumerState<WebViewF> {
             ),
           ),
         );
+        */
       },
       onStart: () async {
         downloadProgress = 0;
